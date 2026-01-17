@@ -10,7 +10,7 @@ Construir uma API backend **production-ready** para gestão de pedidos e pagamen
 * Webhooks seguros
 * Evolução para Retry + DLQ
 
-Este projeto serve como **portfólio técnico**, respondendo antecipadamente dúvidas comuns de entrevistas técnicas.
+Este projeto serve como **portfólio técnico** , respondendo antecipadamente dúvidas comuns de entrevistas técnicas.
 
 ---
 
@@ -155,5 +155,5 @@ Este arquivo é a **fonte de verdade** do projeto.
 ## 📌 Status Atual
 
 * Sprint atual: Sprint 0
-* Última tarefa concluída: Bootstrap NestJS no `develop`
-* Próxima tarefa: Docker Compose (Postgres) + TypeORM + migrations
+* Última tarefa concluída: Docker Compose (Postgres) + TypeORM config + migrations scripts
+* Próxima tarefa: Estrutura de módulos + OrderEntity + primeira migration (Init)
