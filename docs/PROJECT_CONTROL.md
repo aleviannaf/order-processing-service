@@ -1,159 +1,160 @@
-# 📦 Projeto: Sistema de Pedidos com Stripe (Backend Portfolio)
+================================================================================
+ARQUIVO: docs/PROJECT_CONTROL.md
+================================================================================
+
+# 📦 Projeto: Order Processing Service
 
 ## 🎯 Objetivo do Projeto
+Construir uma API backend production-ready para processamento de pedidos e pagamentos, com foco em:
 
-Construir uma API backend **production-ready** para gestão de pedidos e pagamentos usando **Stripe Checkout Session**, com foco em:
+- Arquitetura limpa e modular (NestJS)
+- Regras de negócio explícitas (domínio claro)
+- Idempotência e consistência
+- Integração real com Stripe (Checkout Session + Webhooks)
+- Evolução para processamento assíncrono (Retry + DLQ)
+- Código legível, testável e sustentável
 
-* Arquitetura limpa e modular
-* Regras de negócio explícitas
-* Idempotência e consistência
-* Webhooks seguros
-* Evolução para Retry + DLQ
+Este projeto é um portfólio técnico backend,
+estruturado com práticas profissionais.
 
-Este projeto serve como **portfólio técnico** , respondendo antecipadamente dúvidas comuns de entrevistas técnicas.
+---
+
+## 🧠 Conceitos-chave usados no projeto
+- Bounded Context (módulo orders)
+- Separação de camadas (HTTP → Application → Infra)
+- Infra não contém regra de negócio
+- Banco evolui via migrations
+- Falhas são esperadas e tratadas
 
 ---
 
 ## 🧱 Stack Definida
-
-* Node.js + TypeScript
-* Framework HTTP: (a definir / NestJS ou Express)
-* ORM: TypeORM
-* Banco: PostgreSQL
-* Pagamentos: Stripe (Test Mode)
-* Testes: Jest
-* Infra local: Docker + Docker Compose
+- Node.js + TypeScript
+- NestJS
+- PostgreSQL
+- TypeORM (migrations)
+- Docker + Docker Compose
+- Stripe (Test Mode)
+- Jest
 
 ---
 
 ## 🧩 Escopo Funcional (Backlog do Produto)
 
 ### Epic A — Pedidos
+- Criar pedido com itens e valor total
+- Consultar pedido por ID
+- Listar pedidos com paginação e filtro por status
+- Máquina de estados do pedido:
+  CREATED → PAID → PROCESSING → COMPLETED | FAILED
+- Transições inválidas devem gerar erro de domínio
 
-* Criar pedido com itens e valor total
-* Consultar pedido por ID
-* Listar pedidos com paginação e filtro por status
-* Máquina de estados:
-
-  * CREATED → PAID → PROCESSING → COMPLETED | FAILED
-  * Transições inválidas devem gerar erro de domínio
+---
 
 ### Epic B — Pagamento (Stripe)
+- Criar Checkout Session para pedido
+- Garantir idempotência na criação do checkout
+- Receber webhooks do Stripe
+- Verificar assinatura do webhook (Stripe-Signature)
+- Confirmar pagamento somente via webhook
+- Garantir idempotência de eventos (event.id)
 
-* Criar Checkout Session para pedido
-* Garantir idempotência na criação do checkout
-* Receber webhook do Stripe com verificação de assinatura
-* Confirmar pagamento apenas via webhook
-* Garantir idempotência de eventos (`event.id`)
+---
 
 ### Epic C — Confiabilidade (Evolução)
+- Processamento assíncrono pós-pagamento
+- Retry com backoff
+- Dead Letter Queue (DLQ)
 
-* Processamento assíncrono pós-pagamento
-* Retry com backoff
-* Dead Letter Queue (DLQ)
+---
 
-### Epic D — Qualidade
+### Epic D — Qualidade e DX
+- Swagger / OpenAPI
+- Logs estruturados
+- Tratamento global de erros
+- Testes unitários e de integração
+- README com decisões arquiteturais
 
-* Swagger / OpenAPI
-* Logs estruturados
-* Tratamento global de erros
-* Testes unitários e de integração
-* README com decisões arquiteturais
+---
+
+## 🔐 Escopo de Segurança
+
+### Fora do escopo inicial
+- Autenticação JWT
+- Autorização por usuário/role
+
+Motivo:
+O foco do projeto é domínio, consistência, pagamentos e arquitetura.
+Autenticação adiciona complexidade que não é essencial nesta fase.
+
+### Dentro do escopo
+- Webhooks protegidos por assinatura criptográfica (Stripe)
+- Preparação para adicionar API Key (admin) como evolução
+- JWT/RBAC pode ser adicionado futuramente sem refatoração pesada
 
 ---
 
 ## 🏃‍♂️ Planejamento por Sprints
 
-### Sprint 0 — Fundação (DX + Infra)
+### Sprint 0 — Fundação (Infra + Base)
+- Docker Compose (Postgres)
+- Configuração do TypeORM
+- Migrations habilitadas
+- Estrutura modular inicial
+- Repo organizado com GitFlow simples
 
-**Objetivo:** Base sólida para desenvolvimento
-
-* [ ] Docker Compose (app + postgres)
-* [ ] Configuração do ORM + migrations
-* [ ] Estrutura de pastas modular
-* [ ] Testes rodando
-* [ ] README: como rodar o projeto
-
-**Sprint concluída quando:**
-
-> `docker compose up` sobe tudo e `npm test` funciona
+Status: Concluída
 
 ---
 
 ### Sprint 1 — Domínio de Pedido
-
-**Objetivo:** Regras de negócio claras e testadas
-
-* [ ] Entidade Order
-* [ ] Enum de status
-* [ ] Máquina de estados
-* [ ] CreateOrderService
-* [ ] GetOrderService
-* [ ] ListOrdersService
-* [ ] Testes unitários das regras
+- Máquina de estados do pedido
+- CreateOrderService
+- GetOrderService
+- ListOrdersService
+- Testes unitários de domínio
 
 ---
 
 ### Sprint 2 — Stripe Checkout Session
-
-**Objetivo:** Iniciar pagamento de forma segura
-
-* [ ] Integração com Stripe (Test Mode)
-* [ ] Provider Stripe isolado (infra)
-* [ ] Endpoint POST /orders/:id/checkout
-* [ ] Idempotência de request
-* [ ] Persistência de checkoutSessionId
+- Integração Stripe (Test Mode)
+- Provider Stripe isolado (infra)
+- Endpoint POST /orders/:id/checkout
+- Idempotência de request
+- Persistência do checkoutSessionId
 
 ---
 
-### Sprint 3 — Webhook Stripe
-
-**Objetivo:** Confirmar pagamento corretamente
-
-* [ ] Endpoint POST /webhooks/stripe
-* [ ] Verificação de assinatura (Stripe-Signature)
-* [ ] Processar checkout.session.completed
-* [ ] Marcar pedido como PAID
-* [ ] Tabela processed_events
-* [ ] Teste de webhook duplicado
+### Sprint 3 — Webhooks Stripe
+- Endpoint POST /webhooks/stripe
+- Verificação de assinatura
+- Processar checkout.session.completed
+- Atualizar status para PAID
+- Tabela processed_events (idempotência)
+- Teste de webhook duplicado
 
 ---
 
 ### Sprint 4 — Observabilidade + Hardening
-
-**Objetivo:** Maturidade de produção
-
-* [ ] Logs estruturados (requestId, orderId, eventId)
-* [ ] Handler global de erros
-* [ ] Swagger completo
-* [ ] README com decisões e trade-offs
+- Tratamento global de erros
+- Logs estruturados
+- Swagger completo
+- README final com trade-offs
 
 ---
 
 ### Sprint 5 — Retry + DLQ (Evolução)
-
-**Objetivo:** Robustez contra falhas
-
-* [ ] Fila (a definir: Redis/BullMQ ou SQS)
-* [ ] Worker de processamento
-* [ ] Retry com backoff
-* [ ] DLQ
-* [ ] Endpoint/admin para reprocessar
-
----
-
-## 🧠 Como Retomar Este Projeto em Outra Conversa
-
-Copie este documento inteiro e diga:
-
-> "Estamos trabalhando neste projeto. O que já foi feito é X. Quero continuar da Sprint Y."
-
-Este arquivo é a **fonte de verdade** do projeto.
+- Fila (BullMQ ou SQS)
+- Worker de processamento
+- Retry com backoff
+- Dead Letter Queue
+- Endpoint/admin para reprocessar
 
 ---
 
 ## 📌 Status Atual
+- Sprint atual: Sprint 1
+- Última tarefa concluída: Sprint 0.3 — OrdersModule + OrderEntity + migration inicial
+- Próxima tarefa: Sprint 1.1 — Máquina de estados do pedido
 
-* Sprint atual: Sprint 0
-* Última tarefa concluída: Docker Compose (Postgres) + TypeORM config + migrations scripts
-* Próxima tarefa: Estrutura de módulos + OrderEntity + primeira migration (Init)
+---
