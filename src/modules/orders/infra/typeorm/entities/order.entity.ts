@@ -1,4 +1,10 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
 
 export enum OrderStatus {
   CREATED = 'CREATED',
@@ -8,6 +14,13 @@ export enum OrderStatus {
   FAILED = 'FAILED',
 }
 
+type OrderItem = {
+  sku: string;
+  name: string;
+  quantity: number;
+  unitPriceCents: number;
+};
+
 @Entity('orders')
 export class OrderEntity {
   @PrimaryGeneratedColumn('uuid')
@@ -16,9 +29,8 @@ export class OrderEntity {
   @Column({ type: 'enum', enum: OrderStatus, default: OrderStatus.CREATED })
   status!: OrderStatus;
 
-  // Normalizar posteriormente se quiser.
   @Column({ type: 'jsonb', default: () => "'[]'::jsonb" })
-  items!: Array<{ sku: string; name: string; quantity: number; unitPrice: number }>;
+  items!: OrderItem[];
 
   @Column({ type: 'int' })
   totalCents!: number;
@@ -32,3 +44,5 @@ export class OrderEntity {
   @UpdateDateColumn()
   updatedAt!: Date;
 }
+
+//Por quê jsonb pros itens? Escopo inicial simples. Depois normalizar
