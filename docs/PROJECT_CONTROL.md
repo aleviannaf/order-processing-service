@@ -1,7 +1,3 @@
-================================================================================
-ARQUIVO: docs/PROJECT_CONTROL.md
-================================================================================
-
 # 📦 Projeto: Order Processing Service
 
 ## 🎯 Objetivo do Projeto
@@ -25,6 +21,8 @@ estruturado com práticas profissionais.
 - Infra não contém regra de negócio
 - Banco evolui via migrations
 - Falhas são esperadas e tratadas
+- Pagamento é assíncrono (event-driven via webhook)
+- Idempotência para suportar retries com segurança
 
 ---
 
@@ -97,22 +95,29 @@ Autenticação adiciona complexidade que não é essencial nesta fase.
 ## 🏃‍♂️ Planejamento por Sprints
 
 ### Sprint 0 — Fundação (Infra + Base)
+- Repo criado + GitFlow simples (main + develop)
+- NestJS bootstrap no develop
 - Docker Compose (Postgres)
-- Configuração do TypeORM
+- TypeORM configurado
 - Migrations habilitadas
-- Estrutura modular inicial
-- Repo organizado com GitFlow simples
+- OrdersModule + OrderEntity + migration inicial
 
 Status: Concluída
 
 ---
 
 ### Sprint 1 — Domínio de Pedido
-- Máquina de estados do pedido
+Objetivo: regras de negócio claras e testáveis + endpoints básicos de pedidos
+
+Entregas:
+- Máquina de estados do pedido (domínio)
 - CreateOrderService
 - GetOrderService
 - ListOrdersService
-- Testes unitários de domínio
+- Controllers HTTP para Orders
+- Testes unitários de domínio (e integração básica se fizer sentido)
+
+Status: Em andamento
 
 ---
 
@@ -152,9 +157,102 @@ Status: Concluída
 
 ---
 
-## 📌 Status Atual
-- Sprint atual: Sprint 1
-- Última tarefa concluída: Sprint 0.3 — OrdersModule + OrderEntity + migration inicial
-- Próxima tarefa: Sprint 1.1 — Máquina de estados do pedido
+## ✅ O que já foi feito (marcos)
+- Sprint 0 concluída (infra, banco, migrations, módulo orders, entity inicial)
+- Sprint 1.1 (Passo 1) concluído:
+  - criado o núcleo do domínio para transições de status:
+    - OrderStatus
+    - allowedTransitions
+    - canTransition(from,to)
 
 ---
+
+## 📌 API Contract (Sprint 1)
+Esta seção define o contrato HTTP que vamos implementar na Sprint 1 (sem Stripe ainda).
+
+### 1) Criar pedido
+POST /orders
+
+Request:
+{
+  "items": [
+    { "sku": "SKU-123", "name": "Produto A", "quantity": 2, "unitPriceCents": 1990 }
+  ]
+}
+
+Regras:
+- quantity > 0
+- unitPriceCents > 0
+- items.length >= 1
+- totalCents é calculado no backend: soma(quantity * unitPriceCents)
+
+Response 201:
+{
+  "id": "uuid",
+  "status": "CREATED",
+  "items": [
+    { "sku": "SKU-123", "name": "Produto A", "quantity": 2, "unitPriceCents": 1990 }
+  ],
+  "totalCents": 3980,
+  "createdAt": "ISO_DATE",
+  "updatedAt": "ISO_DATE"
+}
+
+Erros:
+- 400 VALIDATION_ERROR
+
+---
+
+### 2) Buscar pedido por id
+GET /orders/:id
+
+Response 200:
+(mesmo shape do create)
+
+Erros:
+- 404 ORDER_NOT_FOUND
+
+---
+
+### 3) Listar pedidos
+GET /orders?status=CREATED&page=1&limit=20
+
+Response 200:
+{
+  "data": [
+    { "id": "uuid", "status": "CREATED", "totalCents": 3980, "createdAt": "ISO_DATE", "updatedAt": "ISO_DATE" }
+  ],
+  "page": 1,
+  "limit": 20,
+  "total": 42
+}
+
+Erros:
+- 400 VALIDATION_ERROR
+
+---
+
+## 📌 Padrão de erro (contrato)
+Resposta de erro padronizada:
+
+{
+  "statusCode": 400,
+  "code": "VALIDATION_ERROR",
+  "message": "Invalid request",
+  "details": []
+}
+
+---
+
+## 📌 Status Atual
+- Sprint atual: Sprint 1
+- Última tarefa concluída: Sprint 1.1 (Passo 1) — máquina de estados do pedido (OrderStatus + canTransition)
+- Próxima tarefa: Sprint 1.2 — criar DTOs e Controllers para implementar o contrato HTTP (Create/Get/List)
+
+---
+
+## 🔁 Como retomar este projeto
+Copie este documento e diga:
+"Estamos trabalhando neste projeto. O status atual é Sprint X. Quero continuar a partir de Y."
+
+Este arquivo é a fonte de verdade do projeto.
